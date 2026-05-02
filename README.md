@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)](#installation)
 
-[English](#english) · [한국어](#한국어)
+[English](#english) · [한국어](#한국어) · [日本語](#日本語) · [中文](#中文) · [Русский](#русский) · [Tiếng Việt](#tiếng-việt) · [Türkçe](#türkçe) · [Deutsch](#deutsch) · [Español](#español) · [Português](#português)
 
 ---
 
@@ -184,3 +184,350 @@ MIT. [LICENSE](./LICENSE) 참고.
 개인용 셸 확장입니다. 셸 확장은 `explorer.exe` 안에서 실행되므로, 수정된
 버전이 크래시하면 Explorer가 재시작됩니다. 릴리스 빌드는 안정적이지만
 설치는 본인 책임 하에 진행하세요.
+
+---
+
+## 日本語
+
+### 概要
+
+`rdl-shell.dll` は Windows シェルのコンテキストメニューハンドラで、
+[`rdl`](https://github.com/GHSFS/remote-dl) CLI クライアントを Explorer に
+統合します。登録後、`.url` インターネットショートカットファイルを右クリック
+すると、新しいメニューエントリ — **Send to remote-dl** — が表示され、
+ショートカットから URL を読み取ってエッジワーカーにキューイングします。
+
+これは個人利用の `remote-dl` エコシステムの 3 つ目のツールです:
+
+| ツール | 形態 | リポジトリ |
+|---|---|---|
+| `rdl.exe` | ターミナル CLI | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | システムトレイ + クリップボード監視 | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **Explorer 右クリックメニュー** | このリポジトリ |
+
+3 つすべてのツールが CLI が書き込んだ同じディスク設定ファイル
+(`%APPDATA%\rdl\config.json`)を共有します。
+
+### アーキテクチャ
+
+DLL が実装する標準 COM エントリポイント 4 つ + シェルインターフェース 2 つ:
+
+| シンボル | 役割 |
+|---|---|
+| `DllGetClassObject` | CLSID に対応する `IClassFactory` を返す |
+| `DllCanUnloadNow` | 残存参照があるかを報告 |
+| `DllRegisterServer` | `regsvr32` 呼び出し時にレジストリ項目を設定 |
+| `DllUnregisterServer` | `regsvr32 /u` 呼び出し時に項目を削除 |
+| `IShellExtInit` | Explorer から選択ファイルを受け取る |
+| `IContextMenu` | メニュー項目を描画し `InvokeCommand` を処理 |
+
+詳細なインストールおよびビルド手順は [English](#english) セクションを参照
+してください。
+
+### ライセンス
+
+MIT。[LICENSE](./LICENSE) を参照。
+
+---
+
+## 中文
+
+### 概述
+
+`rdl-shell.dll` 是一个 Windows Shell 上下文菜单处理程序,将
+[`rdl`](https://github.com/GHSFS/remote-dl) CLI 客户端集成到 Explorer 中。
+注册后,在 `.url` Internet 快捷方式文件上右键单击会显示新菜单项 —
+**Send to remote-dl** — 它会从快捷方式中读取 URL 并将其加入到所配置的边缘
+工作器队列中。
+
+这是个人用 `remote-dl` 生态的第三个工具:
+
+| 工具 | 形式 | 仓库 |
+|---|---|---|
+| `rdl.exe` | 终端 CLI | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | 系统托盘 + 剪贴板监听 | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **Explorer 右键菜单** | 本仓库 |
+
+三个工具共享 CLI 写入的同一份磁盘配置文件
+(`%APPDATA%\rdl\config.json`)。
+
+### 架构
+
+DLL 实现的 4 个标准 COM 入口点 + 2 个 Shell 接口:
+
+| 符号 | 用途 |
+|---|---|
+| `DllGetClassObject` | 返回对应于本 CLSID 的 `IClassFactory` |
+| `DllCanUnloadNow` | 报告是否仍有外部引用 |
+| `DllRegisterServer` | `regsvr32` 调用时安装注册表项 |
+| `DllUnregisterServer` | `regsvr32 /u` 调用时移除注册表项 |
+| `IShellExtInit` | 从 Explorer 接收选定的文件 |
+| `IContextMenu` | 渲染菜单项并响应 `InvokeCommand` |
+
+详细的安装和构建指南请参阅 [English](#english) 部分。
+
+### 许可证
+
+MIT。详见 [LICENSE](./LICENSE)。
+
+---
+
+## Русский
+
+### Обзор
+
+`rdl-shell.dll` — обработчик контекстного меню Windows Shell, который
+интегрирует CLI-клиент [`rdl`](https://github.com/GHSFS/remote-dl) в
+Explorer. После регистрации правый клик по файлу интернет-ярлыка `.url`
+показывает новый пункт меню — **Send to remote-dl** — который читает URL
+из ярлыка и ставит её в очередь на настроенном edge-worker.
+
+Это третий инструмент персональной экосистемы `remote-dl`:
+
+| Инструмент | Тип | Репозиторий |
+|---|---|---|
+| `rdl.exe` | терминальный CLI | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | системный трей + слежение за буфером обмена | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **контекстное меню Explorer** | этот репозиторий |
+
+Все три инструмента используют один и тот же файл конфигурации, написанный
+CLI (`%APPDATA%\rdl\config.json`).
+
+### Архитектура
+
+DLL реализует четыре стандартных COM-входа и два Shell-интерфейса:
+
+| Символ | Назначение |
+|---|---|
+| `DllGetClassObject` | Возвращает `IClassFactory` для нашего CLSID |
+| `DllCanUnloadNow` | Сообщает, удерживают ли DLL внешние ссылки |
+| `DllRegisterServer` | Создаёт записи реестра (вызывается `regsvr32`) |
+| `DllUnregisterServer` | Удаляет записи (`regsvr32 /u`) |
+| `IShellExtInit` | Получает выделение файлов от Explorer |
+| `IContextMenu` | Рендерит пункт меню и обрабатывает `InvokeCommand` |
+
+Подробные инструкции по установке и сборке см. в разделе [English](#english).
+
+### Лицензия
+
+MIT. См. [LICENSE](./LICENSE).
+
+---
+
+## Tiếng Việt
+
+### Tổng quan
+
+`rdl-shell.dll` là một trình xử lý menu ngữ cảnh Windows Shell, tích hợp
+client CLI [`rdl`](https://github.com/GHSFS/remote-dl) vào Explorer. Sau
+khi đăng ký, click chuột phải vào tệp Internet Shortcut `.url` sẽ hiển thị
+một mục menu mới — **Send to remote-dl** — đọc URL từ shortcut và đưa nó
+vào hàng đợi trên edge worker đã cấu hình.
+
+Đây là công cụ thứ ba trong hệ sinh thái cá nhân `remote-dl`:
+
+| Công cụ | Hình thức | Repository |
+|---|---|---|
+| `rdl.exe` | CLI terminal | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | system tray + theo dõi clipboard | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **menu chuột phải Explorer** | repository này |
+
+Cả ba công cụ đều chia sẻ cùng một tệp cấu hình trên đĩa do CLI viết
+(`%APPDATA%\rdl\config.json`).
+
+### Kiến trúc
+
+DLL triển khai 4 entry point COM chuẩn + 2 interface Shell:
+
+| Ký hiệu | Mục đích |
+|---|---|
+| `DllGetClassObject` | Trả về `IClassFactory` cho CLSID của chúng ta |
+| `DllCanUnloadNow` | Báo cáo có tham chiếu nào còn đang giữ DLL không |
+| `DllRegisterServer` | Cài đặt mục registry khi `regsvr32` gọi |
+| `DllUnregisterServer` | Gỡ bỏ mục registry khi `regsvr32 /u` gọi |
+| `IShellExtInit` | Nhận file được chọn từ Explorer |
+| `IContextMenu` | Vẽ mục menu và xử lý `InvokeCommand` |
+
+Hướng dẫn cài đặt và build chi tiết xem ở phần [English](#english).
+
+### Giấy phép
+
+MIT. Xem [LICENSE](./LICENSE).
+
+---
+
+## Türkçe
+
+### Genel Bakış
+
+`rdl-shell.dll`, [`rdl`](https://github.com/GHSFS/remote-dl) CLI istemcisini
+Explorer'a entegre eden bir Windows Shell bağlam menüsü işleyicisidir.
+Kaydedildikten sonra, bir `.url` İnternet Kısayolu dosyasına sağ
+tıkladığınızda yeni bir menü öğesi — **Send to remote-dl** — görünür;
+kısayoldan URL'yi okur ve yapılandırılmış edge worker'a kuyruğa alır.
+
+Bu, kişisel `remote-dl` ekosisteminin üçüncü aracıdır:
+
+| Araç | Biçim | Depo |
+|---|---|---|
+| `rdl.exe` | terminal CLI | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | sistem tepsisi + pano gözleyici | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **Explorer sağ tık menüsü** | bu depo |
+
+Üç araç da CLI tarafından yazılan aynı disk yapılandırma dosyasını paylaşır
+(`%APPDATA%\rdl\config.json`).
+
+### Mimari
+
+DLL, dört standart COM giriş noktasını ve iki Shell arayüzünü uygular:
+
+| Sembol | Amaç |
+|---|---|
+| `DllGetClassObject` | CLSID için `IClassFactory` döndürür |
+| `DllCanUnloadNow` | Bekleyen referansların DLL'i tutup tutmadığını bildirir |
+| `DllRegisterServer` | `regsvr32` çağrıldığında kayıt defteri girdilerini yükler |
+| `DllUnregisterServer` | `regsvr32 /u` çağrıldığında girdileri kaldırır |
+| `IShellExtInit` | Explorer'dan dosya seçimini alır |
+| `IContextMenu` | Menü öğesini çizer ve `InvokeCommand`'a yanıt verir |
+
+Ayrıntılı kurulum ve derleme talimatları için [English](#english) bölümüne
+bakın.
+
+### Lisans
+
+MIT. [LICENSE](./LICENSE) dosyasına bakın.
+
+---
+
+## Deutsch
+
+### Überblick
+
+`rdl-shell.dll` ist ein Windows-Shell-Kontextmenü-Handler, der den
+CLI-Client [`rdl`](https://github.com/GHSFS/remote-dl) in den Explorer
+integriert. Nach der Registrierung zeigt ein Rechtsklick auf eine
+`.url`-Internet-Verknüpfungsdatei einen neuen Menüeintrag — **Send to
+remote-dl** — der die URL aus der Verknüpfung liest und sie auf dem
+konfigurierten Edge-Worker einreiht.
+
+Dies ist das dritte Werkzeug des persönlichen `remote-dl`-Ökosystems:
+
+| Werkzeug | Form | Repository |
+|---|---|---|
+| `rdl.exe` | Terminal-CLI | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | Systemtray + Zwischenablage-Watcher | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **Explorer-Rechtsklickmenü** | dieses Repository |
+
+Alle drei Werkzeuge teilen sich dieselbe von der CLI geschriebene
+Konfigurationsdatei (`%APPDATA%\rdl\config.json`).
+
+### Architektur
+
+Die DLL implementiert die vier standardmäßigen COM-Einstiegspunkte und zwei
+Shell-Schnittstellen:
+
+| Symbol | Zweck |
+|---|---|
+| `DllGetClassObject` | Gibt die `IClassFactory` für unsere CLSID zurück |
+| `DllCanUnloadNow` | Meldet, ob ausstehende Objekte die DLL festhalten |
+| `DllRegisterServer` | Installiert Registrierungseinträge (von `regsvr32` aufgerufen) |
+| `DllUnregisterServer` | Entfernt Einträge (von `regsvr32 /u` aufgerufen) |
+| `IShellExtInit` | Empfängt die Dateiauswahl vom Explorer |
+| `IContextMenu` | Rendert den Menüeintrag und reagiert auf `InvokeCommand` |
+
+Ausführliche Installations- und Build-Anweisungen findest du im Abschnitt
+[English](#english).
+
+### Lizenz
+
+MIT. Siehe [LICENSE](./LICENSE).
+
+---
+
+## Español
+
+### Descripción general
+
+`rdl-shell.dll` es un manejador de menú contextual de Windows Shell que
+integra el cliente CLI [`rdl`](https://github.com/GHSFS/remote-dl) en
+Explorer. Una vez registrado, al hacer clic derecho sobre un archivo de
+acceso directo de Internet `.url` aparece una nueva entrada de menú —
+**Send to remote-dl** — que lee la URL del acceso directo y la encola en el
+edge worker configurado.
+
+Esta es la tercera herramienta del ecosistema personal `remote-dl`:
+
+| Herramienta | Forma | Repositorio |
+|---|---|---|
+| `rdl.exe` | CLI de terminal | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | bandeja del sistema + vigilancia del portapapeles | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **menú contextual de Explorer** | este repositorio |
+
+Las tres herramientas comparten el mismo archivo de configuración en disco
+escrito por la CLI (`%APPDATA%\rdl\config.json`).
+
+### Arquitectura
+
+El DLL implementa los cuatro puntos de entrada COM estándar y dos
+interfaces de Shell:
+
+| Símbolo | Propósito |
+|---|---|
+| `DllGetClassObject` | Devuelve el `IClassFactory` para nuestro CLSID |
+| `DllCanUnloadNow` | Informa si quedan referencias que retengan el DLL |
+| `DllRegisterServer` | Instala entradas del registro (llamado por `regsvr32`) |
+| `DllUnregisterServer` | Elimina las entradas (llamado por `regsvr32 /u`) |
+| `IShellExtInit` | Recibe la selección de archivos desde Explorer |
+| `IContextMenu` | Renderiza la entrada del menú y reacciona a `InvokeCommand` |
+
+Para instrucciones detalladas de instalación y compilación, consulta la
+sección [English](#english).
+
+### Licencia
+
+MIT. Consulta [LICENSE](./LICENSE).
+
+---
+
+## Português
+
+### Visão geral
+
+`rdl-shell.dll` é um manipulador de menu de contexto do Windows Shell que
+integra o cliente CLI [`rdl`](https://github.com/GHSFS/remote-dl) no
+Explorer. Após o registro, clicar com o botão direito em um arquivo de
+atalho da Internet `.url` mostra uma nova entrada de menu — **Send to
+remote-dl** — que lê a URL do atalho e a coloca na fila do edge worker
+configurado.
+
+Esta é a terceira ferramenta do ecossistema pessoal `remote-dl`:
+
+| Ferramenta | Formato | Repositório |
+|---|---|---|
+| `rdl.exe` | CLI de terminal | [`remote-dl`](https://github.com/GHSFS/remote-dl) |
+| `rdl-tray.exe` | bandeja do sistema + monitor da área de transferência | [`rdl-tray`](https://github.com/GHSFS/rdl-tray) |
+| **`rdl-shell.dll`** | **menu de clique direito do Explorer** | este repositório |
+
+Todas as três ferramentas compartilham o mesmo arquivo de configuração em
+disco escrito pela CLI (`%APPDATA%\rdl\config.json`).
+
+### Arquitetura
+
+O DLL implementa os quatro pontos de entrada COM padrão e duas interfaces
+de Shell:
+
+| Símbolo | Propósito |
+|---|---|
+| `DllGetClassObject` | Retorna o `IClassFactory` para nosso CLSID |
+| `DllCanUnloadNow` | Informa se há referências externas mantendo o DLL |
+| `DllRegisterServer` | Instala as entradas do registro (chamado por `regsvr32`) |
+| `DllUnregisterServer` | Remove as entradas (chamado por `regsvr32 /u`) |
+| `IShellExtInit` | Recebe a seleção de arquivos do Explorer |
+| `IContextMenu` | Desenha a entrada do menu e responde a `InvokeCommand` |
+
+Para instruções detalhadas de instalação e compilação, veja a seção
+[English](#english).
+
+### Licença
+
+MIT. Veja [LICENSE](./LICENSE).
