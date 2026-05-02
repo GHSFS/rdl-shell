@@ -1,0 +1,10 @@
+; Module-definition file — exports the four standard COM entry points so
+; regsvr32.exe can find them by name in the DLL's export table.
+
+LIBRARY rdl_shell
+
+EXPORTS
+    DllGetClassObject       PRIVATE
+    DllCanUnloadNow         PRIVATE
+    DllRegisterServer       PRIVATE
+    DllUnregisterServer     PRIVATE
