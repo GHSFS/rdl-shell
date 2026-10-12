@@ -16,8 +16,7 @@ use windows::Win32::System::Memory::{GlobalLock, GlobalUnlock};
 use windows::Win32::System::Ole::CF_HDROP;
 use windows::Win32::System::Registry::HKEY;
 use windows::Win32::UI::Shell::{
-    IContextMenu, IContextMenu_Impl, IShellExtInit, IShellExtInit_Impl,
-    CMINVOKECOMMANDINFO,
+    IContextMenu, IContextMenu_Impl, IShellExtInit, IShellExtInit_Impl, CMINVOKECOMMANDINFO,
 };
 use windows::Win32::UI::WindowsAndMessaging::{AppendMenuW, HMENU, MF_BYPOSITION, MF_STRING};
 
@@ -85,7 +84,8 @@ impl IContextMenu_Impl for RdlShellHandler_Impl {
             .and_then(|g| g.clone())
             .ok_or_else(|| windows::core::Error::from(E_FAIL))?;
 
-        let url = read_url_from_url_file(&path).ok_or_else(|| windows::core::Error::from(E_FAIL))?;
+        let url =
+            read_url_from_url_file(&path).ok_or_else(|| windows::core::Error::from(E_FAIL))?;
 
         // Best-effort dispatch — we deliberately don't surface UI here. A
         // future revision could pop a tray balloon via a sibling process.
@@ -147,10 +147,10 @@ unsafe fn write_wide(dst: *mut u16, cap: u32, text: &str) -> windows::core::Resu
 /// `DragQueryFileW`, because the latter's signature has churned across
 /// `windows-rs` versions and a manual parse keeps the build hermetic.
 unsafe fn read_first_path(data: &IDataObject) -> windows::core::Result<String> {
-    let mut fmt = FORMATETC {
-        cfFormat: CF_HDROP.0 as u16,
+    let fmt = FORMATETC {
+        cfFormat: CF_HDROP.0,
         ptd: std::ptr::null_mut(),
-        dwAspect: DVASPECT_CONTENT.0 as u32,
+        dwAspect: DVASPECT_CONTENT.0,
         lindex: -1,
         tymed: TYMED_HGLOBAL.0 as u32,
     };

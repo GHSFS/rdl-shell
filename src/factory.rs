@@ -35,12 +35,9 @@ impl IClassFactory_Impl for ClassFactory_Impl {
             let unk: IUnknown = handler.into();
 
             let iid = *riid;
-            if iid == IShellExtInit::IID
-                || iid == IContextMenu::IID
-                || iid == IUnknown::IID
-            {
+            if iid == IShellExtInit::IID || iid == IContextMenu::IID || iid == IUnknown::IID {
                 let iface: IUnknown = unk.cast()?;
-                *ppv = std::mem::transmute(iface);
+                *ppv = std::mem::transmute::<IUnknown, *mut std::ffi::c_void>(iface);
                 Ok(())
             } else {
                 Err(E_NOINTERFACE.into())

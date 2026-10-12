@@ -54,6 +54,11 @@ pub(crate) fn unlock() {
 }
 
 /// COM entry point — returns an `IClassFactory` for our CLSID.
+///
+/// # Safety
+///
+/// All pointer arguments (`rclsid`, `riid`, `ppv`) must be valid, aligned
+/// pointers provided by the Windows COM runtime.
 #[no_mangle]
 pub unsafe extern "system" fn DllGetClassObject(
     rclsid: *const GUID,
@@ -72,8 +77,8 @@ pub unsafe extern "system" fn DllGetClassObject(
         return E_NOINTERFACE;
     }
 
-    let factory: IClassFactory = factory::ClassFactory::default().into();
-    *ppv = std::mem::transmute(factory);
+    let factory: IClassFactory = factory::ClassFactory.into();
+    *ppv = std::mem::transmute::<IClassFactory, *mut std::ffi::c_void>(factory);
     S_OK
 }
 

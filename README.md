@@ -3,6 +3,7 @@
 > Windows Explorer shell extension for [remote-dl](https://github.com/GHSFS/remote-dl) — adds a "Send to remote-dl" entry to the right-click menu of `.url` (Internet Shortcut) files.
 
 [![Build](https://github.com/GHSFS/rdl-shell/actions/workflows/build.yml/badge.svg)](https://github.com/GHSFS/rdl-shell/actions/workflows/build.yml)
+[![Tests](https://github.com/GHSFS/rdl-shell/actions/workflows/test.yml/badge.svg)](https://github.com/GHSFS/rdl-shell/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)](#installation)
 
@@ -284,6 +285,53 @@ rdl-shell/
     ├── build.yml          cargo build + dumpbin /EXPORTS 검증 CI
     └── test.yml           fmt / clippy / test CI
 ```
+
+### 호환성
+
+| 항목 | 지원 사양 |
+|---|---|
+| 운영체제 | Windows 10 1809+ 및 Windows 11 |
+| 아키텍처 | x86_64 전용 (Explorer 프로세스 비트수와 일치) |
+| Rust 툴체인 | 1.75+ (`rust-toolchain.toml`에서 stable 고정) |
+| 링커 | MSVC (Visual Studio Build Tools 2022) |
+| 레지스트리 등록 | 머신 단위 (`HKCR`) — `regsvr32` 실행 시 관리자 권한 필요 |
+
+DLL은 MSVC 런타임을 정적 링크하므로 Windows 기본 시스템 DLL(`KERNEL32.DLL`, `USER32.DLL`, `SHELL32.DLL`, `ADVAPI32.DLL`, `OLE32.DLL`, `CRYPT32.DLL`) 외에 별도의 외부 DLL 의존성이 없습니다.
+
+### 보안 고려사항
+
+- **저장 시 토큰 암호화** — Bearer 토큰은 디스크 기록 전 Windows DPAPI로 암호화되며 생성한 사용자 계정에서만 복호화됩니다.
+- **전송 구간 암호화** — `reqwest`는 `https_only=true`로 빌드되어 TLS 통신만 허용하며 토큰은 `Authorization` 헤더로만 전송됩니다.
+- **런타임 권한 분리** — 최초 1회 `regsvr32` 등록에만 관리자 권한이 필요하며, 실제 우클릭 핸들러는 일반 사용자 권한의 Explorer 프로세스 안에서 동작합니다.
+- **텔레메트리 없음** — 설정된 워커 URL 외의 외부 네트워크 호출을 일절 수행하지 않습니다.
+- **멱등성 보장** — `regsvr32 /u`를 여러 번 실행해도 안전하게 처리됩니다.
+
+### 문제 해결
+
+| 증상 | 주요 원인 | 해결 방법 |
+|---|---|---|
+| 우클릭 메뉴가 나타나지 않음 | Explorer가 이전 핸들러 캐시 유지 | Explorer 재시작 (`taskkill /IM explorer.exe /F && start explorer`) |
+| `regsvr32`에서 `DllRegisterServer failed` 발생 | x64 DLL에 32비트 `regsvr32` 실행 또는 비관리자 실행 | 관리자 권한 프롬프트에서 `C:\Windows\System32\regsvr32.exe` 명시 실행 |
+| 메뉴 클릭 시 아무 동작 없음 | `rdl` CLI 초기 인증 미완료 | `rdl auth login --token <토큰>` 1회 실행 |
+| `server rejected credentials (401)` 알림 | 토큰 만료 또는 폐기 | 텔레그램 봇에서 새 토큰 발급 후 재로그인 |
+| `regsvr32 /u` 후 DLL 파일 삭제 불가 | Explorer 프로세스에 아직 DLL이 매핑됨 | Explorer 재시작 또는 로그오프 후 삭제 |
+
+### 기여하기
+
+PR 제출 전 아래 세 가지 검사를 통과해야 합니다:
+
+```bash
+cargo fmt
+cargo clippy --all-targets -- -D warnings
+cargo test --all-targets
+```
+
+### 감사의 글
+
+- [`windows`](https://crates.io/crates/windows) — 공식 Win32 바인딩 및 `#[implement]` COM vtable 매크로
+- [`reqwest`](https://crates.io/crates/reqwest) + [`rustls`](https://crates.io/crates/rustls) — TLS 전용 HTTP 클라이언트
+- [`directories`](https://crates.io/crates/directories) — `rdl` CLI와 공유하는 설정 경로 탐색
+- [`embed-resource`](https://crates.io/crates/embed-resource) — Win32 매니페스트 및 `.def` 리소스 컴파일
 
 ### 설치
 

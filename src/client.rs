@@ -8,6 +8,7 @@ use std::time::Duration;
 const USER_AGENT: &str = concat!("rdl-shell/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct JobRef {
     pub id: String,
 }
@@ -45,5 +46,6 @@ pub fn queue(cfg: &Config, url: &str) -> Result<JobRef> {
             _ => Error::Http(format!("unexpected status {status}")),
         });
     }
-    resp.json::<JobRef>().map_err(|e| Error::Http(e.to_string()))
+    resp.json::<JobRef>()
+        .map_err(|e| Error::Http(e.to_string()))
 }

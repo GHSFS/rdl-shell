@@ -6,8 +6,7 @@ fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
         embed_resource::compile("resources/app.rc", embed_resource::NONE);
 
-        let def = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("resources/rdl-shell.def");
+        let def = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/rdl-shell.def");
         println!("cargo:rustc-cdylib-link-arg=/DEF:{}", def.display());
 
         println!("cargo:rerun-if-changed=resources/app.rc");
