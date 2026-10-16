@@ -12,11 +12,11 @@
 #![cfg(windows)]
 #![allow(non_snake_case)]
 
-mod client;
-mod config;
-mod error;
+pub mod client;
+pub mod config;
+pub mod error;
 mod factory;
-mod handler;
+pub mod handler;
 mod registry;
 
 use std::sync::atomic::{AtomicI32, AtomicIsize, Ordering};

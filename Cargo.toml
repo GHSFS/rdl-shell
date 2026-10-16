@@ -1,6 +1,6 @@
 [package]
 name = "rdl-shell"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.75"
 description = "Windows Explorer shell extension that adds 'Send to remote-dl' to the Internet Shortcut context menu"
@@ -13,7 +13,7 @@ categories = ["os::windows-apis"]
 
 [lib]
 name = "rdl_shell"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
