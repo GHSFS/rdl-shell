@@ -18,8 +18,15 @@
 `rdl-shell.dll` is a Windows Shell context-menu handler that integrates the
 [`rdl`](https://github.com/GHSFS/remote-dl) CLI client into Explorer. Once
 registered, right-clicking on a `.url` Internet Shortcut file shows a new
-menu entry — **Send to remote-dl** — that reads the URL from the shortcut
+menu entry — **Send to remote-dl** (or **Send N shortcuts to remote-dl**) — that reads the URL from the shortcut
 and queues it on the configured edge worker.
+
+#### ✨ Key Features (v0.2.0)
+- **Multi-File Selection**: Select multiple `.url` files at once; queues all shortcuts in one click.
+- **Zero Explorer Freezing**: Non-blocking asynchronous worker thread with RAII `DllLockGuard` lifetime pinning.
+- **Universal Shortcut Encoding**: Automatic parsing for UTF-8, UTF-16LE (with/without BOM), and UTF-16BE shortcuts.
+- **Strict URL Validation**: Verifies `http://` and `https://` schemas prior to dispatch.
+- **Connection Pooling**: Cached `reqwest` client with keep-alive and DNS caching for sub-millisecond execution.
 
 This is the third piece of the personal-use `remote-dl` ecosystem:
 
@@ -233,8 +240,15 @@ risk.
 `rdl-shell.dll`은 Windows Explorer 셸 컨텍스트 메뉴 핸들러로,
 [`rdl`](https://github.com/GHSFS/remote-dl) CLI 클라이언트를 Explorer에
 통합합니다. 등록 후, `.url` Internet Shortcut 파일을 우클릭하면 새 메뉴
-항목 — **Send to remote-dl** — 가 추가되어 단축에 저장된 URL을 워커에
+항목 — **Send to remote-dl** (다중 선택 시 **Send N shortcuts to remote-dl**) — 가 추가되어 단축에 저장된 URL을 워커에
 큐잉합니다.
+
+#### ✨ 주요 핵심 기능 (v0.2.0)
+- **다중 파일 일괄 큐잉 (Multi-File Selection)**: 여러 개의 `.url` 바로가기를 동시 선택하여 원클릭으로 일괄 전송 지원.
+- **Explorer UI 프리징 방지 (Non-Blocking Async)**: 백그라운드 워커 스레드 분기 및 `DllLockGuard` RAII 수명 가드로 탐색기 먹통 0% 보장.
+- **범용 인코딩 완벽 호환**: UTF-8, UTF-16LE(BOM 유무 무관), UTF-16BE 및 대소문자 무관 `url=` 키 자동 감지 및 디코딩.
+- **엄격한 URL 스키마 검증**: `http://` 및 `https://` 외의 비정상 스키마 사전 차단.
+- **연결 풀링 최적화**: `reqwest` 클라이언트 캐싱(`OnceLock`)을 통해 TCP Keep-Alive 및 DNS 캐시 재활용.
 
 `remote-dl` 개인용 생태계의 세 번째 도구:
 
@@ -393,8 +407,15 @@ MIT. [LICENSE](./LICENSE) 참고.
 `rdl-shell.dll` は Windows シェルのコンテキストメニューハンドラで、
 [`rdl`](https://github.com/GHSFS/remote-dl) CLI クライアントを Explorer に
 統合します。登録後、`.url` インターネットショートカットファイルを右クリック
-すると、新しいメニューエントリ — **Send to remote-dl** — が表示され、
+すると、新しいメニューエントリ — **Send to remote-dl** (複数選択時は **Send N shortcuts to remote-dl**) — が表示され、
 ショートカットから URL を読み取ってエッジワーカーにキューイングします。
+
+#### ✨ 主な機能 (v0.2.0)
+- **複数ファイル一括キューイング (Multi-File Selection)**: 複数の `.url` ショートカットを一度に選択して一括登録可能。
+- **UI フリーズ防止 (Non-Blocking Async)**: バックグラウンドワーカースレッドで非同期送信を行い、Explorer のフリーズを完全に排除。
+- **ユニバーサルエンコーディング対応**: UTF-8、UTF-16LE（BOM 有無を問わず）、UTF-16BE、大文字小文字を問わない `url=` キーを自動検出。
+- **厳格な URL 検証**: 送信前に `http://` および `https://` スキームを自動検証。
+- **接続プーリング最適化**: `reqwest` クライアントのキャッシュ（`OnceLock`）により Keep-Alive と DNS キャッシュを再利用。
 
 これは個人利用の `remote-dl` エコシステムの 3 つ目のツールです:
 
@@ -462,8 +483,15 @@ MIT。[LICENSE](./LICENSE) を参照。
 `rdl-shell.dll` 是一个 Windows Shell 上下文菜单处理程序,将
 [`rdl`](https://github.com/GHSFS/remote-dl) CLI 客户端集成到 Explorer 中。
 注册后,在 `.url` Internet 快捷方式文件上右键单击会显示新菜单项 —
-**Send to remote-dl** — 它会从快捷方式中读取 URL 并将其加入到所配置的边缘
+**Send to remote-dl** (多选时为 **Send N shortcuts to remote-dl**) — 它会从快捷方式中读取 URL 并将其加入到所配置的边缘
 工作器队列中。
+
+#### ✨ 核心特性 (v0.2.0)
+- **多文件批量排队 (Multi-File Selection)**: 支持同时选中多个 `.url` 快捷方式,一键批量发送。
+- **防止资源管理器卡顿 (Non-Blocking Async)**: 后台异步工作线程搭配 `DllLockGuard` RAII 生命周期守护,保障 Explorer 界面 0 冻结。
+- **全格式快捷方式编码兼容**: 自动解析 UTF-8、UTF-16LE(无论带无 BOM)、UTF-16BE 及不区分大小写的 `url=` 键。
+- **严格 URL 协议校验**: 调度前严格限制并校验 `http://` 与 `https://` 协议。
+- **连接池复用优化**: 基于 `OnceLock` 缓存 `reqwest` 客户端,充分复用 Keep-Alive 连接与 DNS 缓存。
 
 这是个人用 `remote-dl` 生态的第三个工具:
 
@@ -530,8 +558,15 @@ MIT。详见 [LICENSE](./LICENSE)。
 `rdl-shell.dll` — обработчик контекстного меню Windows Shell, который
 интегрирует CLI-клиент [`rdl`](https://github.com/GHSFS/remote-dl) в
 Explorer. После регистрации правый клик по файлу интернет-ярлыка `.url`
-показывает новый пункт меню — **Send to remote-dl** — который читает URL
+показывает новый пункт меню — **Send to remote-dl** (при выборе нескольких файлов: **Send N shortcuts to remote-dl**) — который читает URL
 из ярлыка и ставит её в очередь на настроенном edge-worker.
+
+#### ✨ Ключевые возможности (v0.2.0)
+- **Пакетная обработка нескольких файлов**: выбор нескольких `.url` ярлыков одновременно; постановка всех ярлыков в очередь в один клик.
+- **Полное отсутствие зависаний Проводника**: неблокирующий асинхронный рабочий поток с фиксацией времени жизни через RAII `DllLockGuard`.
+- **Универсальная поддержка кодировок**: автоматический парсинг UTF-8, UTF-16LE (с BOM и без него) и UTF-16BE с регистронезависимым поиском ключа `url=`.
+- **Строгая валидация URL**: предварительная проверка допустимости только схем `http://` и `https://`.
+- **Пул сетевых соединений**: кэширование клиента `reqwest` (`OnceLock`) с повторным использованием TCP Keep-Alive и DNS-кэша.
 
 Это третий инструмент персональной экосистемы `remote-dl`:
 
@@ -598,8 +633,15 @@ MIT. См. [LICENSE](./LICENSE).
 `rdl-shell.dll` là một trình xử lý menu ngữ cảnh Windows Shell, tích hợp
 client CLI [`rdl`](https://github.com/GHSFS/remote-dl) vào Explorer. Sau
 khi đăng ký, click chuột phải vào tệp Internet Shortcut `.url` sẽ hiển thị
-một mục menu mới — **Send to remote-dl** — đọc URL từ shortcut và đưa nó
+một mục menu mới — **Send to remote-dl** (hoặc **Send N shortcuts to remote-dl** khi chọn nhiều tệp) — đọc URL từ shortcut và đưa nó
 vào hàng đợi trên edge worker đã cấu hình.
+
+#### ✨ Tính năng nổi bật (v0.2.0)
+- **Chọn nhiều tệp cùng lúc (Multi-File Selection)**: Cho phép chọn nhiều tệp shortcut `.url` và đưa tất cả vào hàng đợi chỉ với một cú nhấp chuột.
+- **Không gây treo Explorer (Non-Blocking Async)**: Xử lý bằng luồng worker bất đồng bộ trong nền, bảo vệ vòng đời bằng RAII `DllLockGuard`.
+- **Tương thích mọi bảng mã shortcut**: Tự động nhận diện và giải mã UTF-8, UTF-16LE (có hoặc không có BOM), UTF-16BE và khóa `url=` không phân biệt chữ hoa/thường.
+- **Xác thực URL nghiêm ngặt**: Kiểm tra và chỉ cho phép giao thức `http://` và `https://` trước khi gửi.
+- **Tối ưu hóa Connection Pooling**: Sử dụng client `reqwest` lưu trong bộ nhớ đệm (`OnceLock`), tái sử dụng kết nối Keep-Alive và DNS cache.
 
 Đây là công cụ thứ ba trong hệ sinh thái cá nhân `remote-dl`:
 
@@ -666,8 +708,15 @@ MIT. Xem [LICENSE](./LICENSE).
 `rdl-shell.dll`, [`rdl`](https://github.com/GHSFS/remote-dl) CLI istemcisini
 Explorer'a entegre eden bir Windows Shell bağlam menüsü işleyicisidir.
 Kaydedildikten sonra, bir `.url` İnternet Kısayolu dosyasına sağ
-tıkladığınızda yeni bir menü öğesi — **Send to remote-dl** — görünür;
+tıkladığınızda yeni bir menü öğesi — **Send to remote-dl** (veya birden fazla seçimde **Send N shortcuts to remote-dl**) — görünür;
 kısayoldan URL'yi okur ve yapılandırılmış edge worker'a kuyruğa alır.
+
+#### ✨ Temel Özellikler (v0.2.0)
+- **Çoklu Dosya Seçimi**: Birden fazla `.url` kısayolunu aynı anda seçin; tüm bağlantıları tek tıklamayla kuyruğa alın.
+- **Explorer Donmasını Önleme (Non-Blocking Async)**: RAII `DllLockGuard` ile arka planda çalışan eşzamansız (async) iş parçacığı sayesinde Explorer kilitlenmelerini %100 önler.
+- **Evrensel Kısayol Kodlama Desteği**: UTF-8, UTF-16LE (BOM'lu/BOM'suz) ve UTF-16BE ile büyük/küçük harf duyarsız `url=` anahtarlarını otomatik ayrıştırır.
+- **Sıkı URL Şeması Doğrulaması**: Yalnızca `http://` ve `https://` protokollerine izin vererek geçersiz istekleri engeller.
+- **Bağlantı Havuzu Optimizasyonu**: `OnceLock` ile önbelleğe alınan `reqwest` istemcisi sayesinde TCP Keep-Alive ve DNS önbelleğini yeniden kullanır.
 
 Bu, kişisel `remote-dl` ekosisteminin üçüncü aracıdır:
 
@@ -736,8 +785,15 @@ MIT. [LICENSE](./LICENSE) dosyasına bakın.
 CLI-Client [`rdl`](https://github.com/GHSFS/remote-dl) in den Explorer
 integriert. Nach der Registrierung zeigt ein Rechtsklick auf eine
 `.url`-Internet-Verknüpfungsdatei einen neuen Menüeintrag — **Send to
-remote-dl** — der die URL aus der Verknüpfung liest und sie auf dem
+remote-dl** (bzw. bei Mehrfachauswahl **Send N shortcuts to remote-dl**) — der die URL aus der Verknüpfung liest und sie auf dem
 konfigurierten Edge-Worker einreiht.
+
+#### ✨ Hauptmerkmale (v0.2.0)
+- **Mehrfachdateiauswahl (Multi-File Selection)**: Wählen Sie mehrere `.url`-Dateien gleichzeitig aus und reihen Sie alle Verknüpfungen mit einem Klick ein.
+- **Kein Einfrieren des Explorers**: Nicht blockierender asynchroner Hintergrund-Thread mit `DllLockGuard`-RAII-Lebensdauerabsicherung.
+- **Universelle Verknüpfungs-Codierung**: Automatische Erkennung und Dekodierung von UTF-8, UTF-16LE (mit/ohne BOM), UTF-16BE und dem Schlüssel `url=` (ohne Berücksichtigung der Groß-/Kleinschreibung).
+- **Strikte URL-Validierung**: Verifiziert vor dem Absenden ausschließlich `http://`- und `https://`-Schemas.
+- **Verbindungspool-Optimierung**: Gecachter `reqwest`-Client (`OnceLock`) zur Wiederverwendung von TCP-Keep-Alive und DNS-Einträgen.
 
 Dies ist das dritte Werkzeug des persönlichen `remote-dl`-Ökosystems:
 
@@ -807,8 +863,15 @@ MIT. Siehe [LICENSE](./LICENSE).
 integra el cliente CLI [`rdl`](https://github.com/GHSFS/remote-dl) en
 Explorer. Una vez registrado, al hacer clic derecho sobre un archivo de
 acceso directo de Internet `.url` aparece una nueva entrada de menú —
-**Send to remote-dl** — que lee la URL del acceso directo y la encola en el
+**Send to remote-dl** (o **Send N shortcuts to remote-dl** si se seleccionan varios archivos) — que lee la URL del acceso directo y la encola en el
 edge worker configurado.
+
+#### ✨ Características principales (v0.2.0)
+- **Selección de múltiples archivos**: Seleccione varios archivos `.url` a la vez y encole todos los accesos directos con un solo clic.
+- **Cero bloqueos de Explorer (Non-Blocking Async)**: Hilo de trabajo asíncrono en segundo plano protegido con `DllLockGuard` RAII para evitar el congelamiento de la interfaz.
+- **Compatibilidad universal de codificación**: Análisis automático para UTF-8, UTF-16LE (con o sin BOM), UTF-16BE y búsqueda de clave `url=` insensible a mayúsculas/minúsculas.
+- **Validación estricta de esquemas URL**: Comprueba y restringe estrictamente los esquemas a `http://` y `https://` antes del envío.
+- **Optimización de Connection Pooling**: Cliente `reqwest` en caché (`OnceLock`) para reutilización de conexiones Keep-Alive y resolución DNS.
 
 Esta es la tercera herramienta del ecosistema personal `remote-dl`:
 
@@ -878,8 +941,15 @@ MIT. Consulta [LICENSE](./LICENSE).
 integra o cliente CLI [`rdl`](https://github.com/GHSFS/remote-dl) no
 Explorer. Após o registro, clicar com o botão direito em um arquivo de
 atalho da Internet `.url` mostra uma nova entrada de menu — **Send to
-remote-dl** — que lê a URL do atalho e a coloca na fila do edge worker
+remote-dl** (ou **Send N shortcuts to remote-dl** ao selecionar múltiplos arquivos) — que lê a URL do atalho e a coloca na fila do edge worker
 configurado.
+
+#### ✨ Principais recursos (v0.2.0)
+- **Seleção de múltiplos arquivos**: Selecione vários atalhos `.url` de uma só vez e enfileire todos com apenas um clique.
+- **Sem travamento do Explorer (Non-Blocking Async)**: Thread de trabalho assíncrona em segundo plano com proteção de tempo de vida RAII `DllLockGuard`.
+- **Codificação universal de atalhos**: Suporte automático para decodificação de UTF-8, UTF-16LE (com ou sem BOM), UTF-16BE e detecção insensível a maiúsculas da chave `url=`.
+- **Validação estrita de URL**: Garante que apenas os esquemas `http://` e `https://` sejam aceitos antes do disparo.
+- **Otimização de Pool de Conexões**: Cliente `reqwest` em cache (`OnceLock`) com reaproveitamento de Keep-Alive e cache de DNS.
 
 Esta é a terceira ferramenta do ecossistema pessoal `remote-dl`:
 

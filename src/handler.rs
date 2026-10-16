@@ -20,16 +20,30 @@ use windows::Win32::UI::Shell::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{AppendMenuW, HMENU, MF_BYPOSITION, MF_STRING};
 
-const MENU_TEXT: &str = "Send to remote-dl";
 const VERB_ANSI: &str = "rdlshell.send";
 const HELP_TEXT: &str = "Queue this URL via the remote-dl backend.";
 
-/// One handler instance per right-click. Carries the file path Explorer
-/// selected.
+/// RAII guard to keep DLL pinned in memory during asynchronous background dispatch.
+struct DllLockGuard;
+
+impl DllLockGuard {
+    fn new() -> Self {
+        crate::lock();
+        Self
+    }
+}
+
+impl Drop for DllLockGuard {
+    fn drop(&mut self) {
+        crate::unlock();
+    }
+}
+
+/// One handler instance per right-click. Carries all selected file paths.
 #[implement(IShellExtInit, IContextMenu)]
 #[derive(Default)]
 pub struct RdlShellHandler {
-    selected: Mutex<Option<String>>,
+    selected: Mutex<Vec<String>>,
 }
 
 impl IShellExtInit_Impl for RdlShellHandler_Impl {
@@ -40,9 +54,9 @@ impl IShellExtInit_Impl for RdlShellHandler_Impl {
         _hkey_progid: HKEY,
     ) -> windows::core::Result<()> {
         let data = pdtobj.ok_or_else(|| windows::core::Error::from(E_INVALIDARG))?;
-        let path = unsafe { read_first_path(data) }?;
+        let paths = unsafe { read_selected_paths(data) }?;
         if let Ok(mut slot) = self.selected.lock() {
-            *slot = Some(path);
+            *slot = paths;
         }
         Ok(())
     }
@@ -58,7 +72,14 @@ impl IContextMenu_Impl for RdlShellHandler_Impl {
         _uflags: u32,
     ) -> windows::core::Result<()> {
         unsafe {
-            let label = wide(MENU_TEXT);
+            let count = self.selected.lock().map(|s| s.len()).unwrap_or(0);
+            let menu_text = if count > 1 {
+                format!("Send {count} shortcuts to remote-dl")
+            } else {
+                "Send to remote-dl".to_string()
+            };
+
+            let label = wide(&menu_text);
             AppendMenuW(
                 hmenu,
                 MF_STRING | MF_BYPOSITION,
@@ -66,9 +87,6 @@ impl IContextMenu_Impl for RdlShellHandler_Impl {
                 PCWSTR(label.as_ptr()),
             )?;
             let _ = indexmenu;
-            // The HRESULT.SeverityCode encoded as the number of commands
-            // added is conveyed by the trait wrapper in this windows-rs
-            // version; returning Ok(()) is sufficient here.
             Ok(())
         }
     }
@@ -77,20 +95,50 @@ impl IContextMenu_Impl for RdlShellHandler_Impl {
         if pici.is_null() {
             return Err(E_INVALIDARG.into());
         }
-        let path = self
+
+        let paths: Vec<String> = self
             .selected
             .lock()
             .ok()
-            .and_then(|g| g.clone())
-            .ok_or_else(|| windows::core::Error::from(E_FAIL))?;
+            .map(|g| g.clone())
+            .unwrap_or_default();
 
-        let url =
-            read_url_from_url_file(&path).ok_or_else(|| windows::core::Error::from(E_FAIL))?;
+        if paths.is_empty() {
+            return Err(E_FAIL.into());
+        }
 
-        // Best-effort dispatch — we deliberately don't surface UI here. A
-        // future revision could pop a tray balloon via a sibling process.
-        let cfg = Config::load().map_err(|_| windows::core::Error::from(E_FAIL))?;
-        client::queue(&cfg, &url).map_err(|_| windows::core::Error::from(E_FAIL))?;
+        // Spawn a background thread to prevent blocking Explorer's UI thread.
+        // DllLockGuard ensures the DLL will not be unloaded while the worker is executing.
+        std::thread::spawn(move || {
+            let _guard = DllLockGuard::new();
+
+            let cfg = match Config::load() {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("rdl-shell: failed to load config: {e}");
+                    return;
+                }
+            };
+
+            let mut urls = Vec::with_capacity(paths.len());
+            for path in &paths {
+                if let Some(url) = read_url_from_url_file(path) {
+                    urls.push(url);
+                }
+            }
+
+            if urls.is_empty() {
+                return;
+            }
+
+            let results = client::queue_all(&cfg, &urls);
+            for (url, res) in urls.iter().zip(results) {
+                if let Err(e) = res {
+                    eprintln!("rdl-shell: failed to queue {url}: {e}");
+                }
+            }
+        });
+
         Ok(())
     }
 
@@ -141,12 +189,10 @@ unsafe fn write_wide(dst: *mut u16, cap: u32, text: &str) -> windows::core::Resu
     Ok(())
 }
 
-/// Reads the first file path from an `IDataObject` carrying `CF_HDROP` data.
+/// Reads all file paths from an `IDataObject` carrying `CF_HDROP` data.
 ///
-/// We parse the `DROPFILES` struct directly rather than calling
-/// `DragQueryFileW`, because the latter's signature has churned across
-/// `windows-rs` versions and a manual parse keeps the build hermetic.
-unsafe fn read_first_path(data: &IDataObject) -> windows::core::Result<String> {
+/// Iterates through the double-NUL terminated list in DROPFILES.
+unsafe fn read_selected_paths(data: &IDataObject) -> windows::core::Result<Vec<String>> {
     let fmt = FORMATETC {
         cfFormat: CF_HDROP.0,
         ptd: std::ptr::null_mut(),
@@ -162,45 +208,105 @@ unsafe fn read_first_path(data: &IDataObject) -> windows::core::Result<String> {
         return Err(E_FAIL.into());
     }
 
-    // DROPFILES { pFiles: u32, pt: POINT, fNC: BOOL, fWide: BOOL }
-    // The file list starts at base + pFiles, then is a sequence of
-    // null-terminated strings (wide if fWide != 0) ending with a double-NUL.
     let p_files = *(base as *const u32);
     let f_wide = *(base.add(16) as *const i32) != 0;
     let list = base.add(p_files as usize);
 
-    let result = if f_wide {
-        let p = list as *const u16;
-        let mut len = 0usize;
-        while *p.add(len) != 0 && len < 0x4000 {
-            len += 1;
+    let mut paths = Vec::new();
+
+    if f_wide {
+        let mut p = list as *const u16;
+        loop {
+            let mut len = 0usize;
+            while *p.add(len) != 0 && len < 0x4000 {
+                len += 1;
+            }
+            if len == 0 {
+                break;
+            }
+            let slice = std::slice::from_raw_parts(p, len);
+            let s = String::from_utf16_lossy(slice);
+            if !s.is_empty() {
+                paths.push(s);
+            }
+            p = p.add(len + 1);
         }
-        let slice = std::slice::from_raw_parts(p, len);
-        String::from_utf16_lossy(slice)
     } else {
-        let mut len = 0usize;
-        while *list.add(len) != 0 && len < 0x4000 {
-            len += 1;
+        let mut p = list;
+        loop {
+            let mut len = 0usize;
+            while *p.add(len) != 0 && len < 0x4000 {
+                len += 1;
+            }
+            if len == 0 {
+                break;
+            }
+            let slice = std::slice::from_raw_parts(p, len);
+            let s = String::from_utf8_lossy(slice).into_owned();
+            if !s.is_empty() {
+                paths.push(s);
+            }
+            p = p.add(len + 1);
         }
-        let slice = std::slice::from_raw_parts(list, len);
-        String::from_utf8_lossy(slice).into_owned()
-    };
+    }
 
     let _ = GlobalUnlock(hglobal);
-    if result.is_empty() {
+    if paths.is_empty() {
         Err(E_FAIL.into())
     } else {
-        Ok(result)
+        Ok(paths)
     }
 }
 
-/// `.url` files are simple INI-format text. The URL we want is the
-/// `URL=` line under `[InternetShortcut]`.
-fn read_url_from_url_file(path: &str) -> Option<String> {
-    let content = std::fs::read_to_string(path).ok()?;
+/// Decodes the raw bytes of an `.url` file into a string, supporting UTF-8,
+/// UTF-16LE (with/without BOM), and UTF-16BE.
+pub fn decode_url_file_bytes(bytes: &[u8]) -> Option<String> {
+    if bytes.starts_with(&[0xEF, 0xBB, 0xBF]) {
+        return String::from_utf8(bytes[3..].to_vec()).ok();
+    }
+    if bytes.starts_with(&[0xFF, 0xFE]) {
+        let u16_slice: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect();
+        return Some(String::from_utf16_lossy(&u16_slice));
+    }
+    if bytes.starts_with(&[0xFE, 0xFF]) {
+        let u16_slice: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|c| u16::from_be_bytes([c[0], c[1]]))
+            .collect();
+        return Some(String::from_utf16_lossy(&u16_slice));
+    }
+
+    // Check for UTF-16LE without BOM: first ascii chars often have null in odd positions
+    if bytes.len() >= 4 && bytes[1] == 0 && bytes[3] == 0 {
+        let u16_slice: Vec<u16> = bytes
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect();
+        return Some(String::from_utf16_lossy(&u16_slice));
+    }
+
+    // Fall back to UTF-8
+    String::from_utf8(bytes.to_vec())
+        .ok()
+        .or_else(|| Some(String::from_utf8_lossy(bytes).into_owned()))
+}
+
+/// `.url` files are INI-format text. The URL we want is the
+/// `URL=` line under `[InternetShortcut]`. Case-insensitive match on the key.
+pub fn read_url_from_url_file(path: &str) -> Option<String> {
+    let bytes = std::fs::read(path).ok()?;
+    let content = decode_url_file_bytes(&bytes)?;
+
     for line in content.lines() {
-        if let Some(rest) = line.trim().strip_prefix("URL=") {
-            return Some(rest.trim().to_string());
+        let trimmed = line.trim();
+        if trimmed.to_ascii_lowercase().starts_with("url=") {
+            let val = trimmed[4..].trim();
+            if !val.is_empty() {
+                return Some(val.to_string());
+            }
         }
     }
     None
@@ -216,8 +322,8 @@ mod tests {
 
     #[test]
     fn parses_internet_shortcut_file() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("test.url");
+        let temp_dir = std::env::temp_dir();
+        let path = temp_dir.join("test_rdl_shortcut.url");
         std::fs::write(
             &path,
             b"[InternetShortcut]\r\nURL=https://example.com/x\r\n",
@@ -227,13 +333,32 @@ mod tests {
             read_url_from_url_file(path.to_str().unwrap()),
             Some("https://example.com/x".to_string())
         );
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
     fn returns_none_when_no_url_line() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("nope.url");
+        let temp_dir = std::env::temp_dir();
+        let path = temp_dir.join("nope_rdl_shortcut.url");
         std::fs::write(&path, b"[Some]\r\nKey=value\r\n").unwrap();
         assert!(read_url_from_url_file(path.to_str().unwrap()).is_none());
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn parses_utf16le_shortcut_file() {
+        let temp_dir = std::env::temp_dir();
+        let path = temp_dir.join("utf16_rdl_shortcut.url");
+        let text = "[InternetShortcut]\r\nURL=https://example.com/utf16\r\n";
+        let mut bytes = vec![0xFF, 0xFE];
+        for u in text.encode_utf16() {
+            bytes.extend_from_slice(&u.to_le_bytes());
+        }
+        std::fs::write(&path, &bytes).unwrap();
+        assert_eq!(
+            read_url_from_url_file(path.to_str().unwrap()),
+            Some("https://example.com/utf16".to_string())
+        );
+        let _ = std::fs::remove_file(&path);
     }
 }

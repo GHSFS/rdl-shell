@@ -24,6 +24,9 @@ pub enum Error {
 
     #[error("json: {0}")]
     Json(#[from] serde_json::Error),
+
+    #[error("invalid url: {0}")]
+    InvalidUrl(String),
 }
 
 impl From<windows::core::Error> for Error {
